@@ -6,116 +6,81 @@
 /*   By: pabonnin <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/31 19:04:24 by pabonnin          #+#    #+#             */
-/*   Updated: 2017/02/02 16:47:21 by pabonnin         ###   ########.fr       */
+/*   Updated: 2017/02/03 19:25:59 by pabonnin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include "lib2/libft.h"
+#include "libft/libft.h"
 
-char	*cut_newline(char *s1, char *line)
+int		ft_strlen_c(char *str, char c)
 {
-	int 	i;
-	int		j;
+	int	i;
 
 	i = 0;
-	j = 0;
-	if (line != NULL)
-		free(line);
-	line = (char *)malloc(sizeof(char) * ft_strlen(s1) + 1);
-	while (s1[i] != '\n' && s1[i])
-	{
-		line[i] = s1[i];
+	while (str[i] != c && str[i])
 		i++;
-	}
-	line[i] = '\0';
-	return(line);
+	return (i);
 }
 
-char	*safe_join(char *dest, char *src)
+char	*ft_strdup_c(char *src, char *dest, char c)
 {
-	char *tmp;
-	int	i;
-	int	j;
+	int		i;
 
 	i = 0;
-	j = 0;
-	if (!src)
-		return (NULL);
-	tmp = (dest)? (char*)malloc(sizeof(char) * (ft_strlen(dest) +
-			   	ft_strlen(src) + 1)): (char*)malloc(sizeof(char) *
-		   	ft_strlen(src) + 1);
-	if (dest)
+	dest = (char *)malloc(sizeof(char) * (ft_strlen_c(src, c) + 1));
+	if (!dest)
+		return (0);
+	ft_putstr("before while\n");
+	while (src[i] != c && src[i])
 	{
-		while (dest[i])
-		{
-			tmp[i] = dest[i];
-			i++;
-		}
-	}
-	while (src[j])
-	{
-		tmp[i] = src[j];
+		ft_putstr("into the wild\n");
+		dest[i] = src[i];
 		i++;
-		j++;
 	}
-	tmp[i] = '\0';
-	dest = tmp;
+	dest[i] = '\0';
 	return (dest);
 }
 
-char	*del_and_replace(char *str)
-{
-	int	i;
-	int	j;
-	char 	*tmp;
-
-	i = 0;
-	j = 0;
-	if (ft_strchr(str, '\n') != NULL)
-	{
-		while (str[i] != '\n')
-			i++;
-	}
-	tmp = malloc(sizeof(char) * ft_strlen(str) - (i + 1));
-	i++;
-	while (str[i] != '\0')
-	{
-		tmp[j] = str[i];
-		j++;
-		i++;
-	}
-		tmp[j] = '\0';
-	str = tmp;
-	return (str);
-}
-
-int				get_next_line(int const fd, char **line)
+int				read_one_line(int const fd, char *b_tmp)
 {
 	int				byte_r;
 	char			buff[BUFF_SIZE + 1];
-	static char		*b_tmp;
-
 	
-	if (!line)
-		return (-1);
-	if (b_tmp != NULL)
-		b_tmp = del_and_replace(b_tmp);
-	ft_putstr("ok");
-	while ((byte_r = read(fd, buff, BUFF_SIZE)) > 0 && ft_strchr(buff, '\n') != NULL)
-	{
+	byte_r = 1;
+	b_tmp = ft_strnew(BUFF_SIZE + 1);
+	while (byte_r > 0 && ft_strchr(b_tmp, '\n') == NULL)
+	{	
+		byte_r = read(fd, &buff, BUFF_SIZE);
+		if (byte_r == -1)
+			return (-1);
 		buff[byte_r] = '\0';
-		ft_putstr(buff);
-		b_tmp = safe_join(b_tmp, buff);
-		ft_putstr(b_tmp);
+		b_tmp = ft_strjoin(b_tmp, buff);
 	}
-	ft_putstr("\n\n");
-	if (byte_r == 0)
-		return (0);
-	if ((*line = cut_newline(b_tmp, *line)) != NULL)
-			return (1);
-	ft_putstr("il a fini");
-	if (byte_r == -1)
+		ft_putstr(b_tmp);
+	return (byte_r);
+}
+
+int			get_next_line(const int fd, char **line)
+{
+	ssize_t		b_read;
+	char		*b_tmp;
+	char		*ftmp;
+
+	if (!line)
+		return (-1);	
+	ft_putstr("ok\n");
+	if ((b_read = read_one_line(fd, b_tmp)) == -1)
 		return (-1);
-	return (0);
+	ft_putstr(b_tmp);
+	line[0] = (char*)malloc(sizeof(char) * (ft_strlen_c(b_tmp, '\n') + 1));
+	line[0] = ft_strdup_c(b_tmp, line[0], '\n');
+	ft_putstr("ok2\n");
+	ft_putstr(*line);
+	ft_putstr("ok3\n");
+	ftmp = b_tmp;
+	ft_putstr("ok4\n");
+	b_tmp = ft_strdup(b_tmp + ft_strlen_c(b_tmp, '\n') + 1);
+	free(ftmp);
+	return(**line || b_read > 0 ? 1 : 0);
 }
